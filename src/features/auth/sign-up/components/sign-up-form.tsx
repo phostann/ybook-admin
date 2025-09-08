@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from '@tanstack/react-router'
+import { Loader2, UserPlus } from 'lucide-react'
+import { toast } from 'sonner'
 import { IconFacebook, IconGithub } from '@/assets/brand-icons'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -15,17 +18,25 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
+import { authApi } from '@/features/auth/api'
 
 const formSchema = z
   .object({
-    email: z.email({
-      error: (iss) =>
-        iss.input === '' ? 'Please enter your email' : undefined,
-    }),
+    username: z
+      .string()
+      .min(1, 'Please enter a username')
+      .min(2, 'Username must be at least 2 characters')
+      .max(50, 'Username must be less than 50 characters'),
+    email: z
+      .string()
+      .min(1, 'Please enter your email')
+      .email('Please enter a valid email address')
+      .max(100, 'Email must be less than 100 characters'),
     password: z
       .string()
       .min(1, 'Please enter your password')
-      .min(7, 'Password must be at least 7 characters long'),
+      .min(6, 'Password must be at least 6 characters')
+      .max(20, 'Password must be less than 20 characters'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -38,24 +49,39 @@ export function SignUpForm({
   ...props
 }: React.HTMLAttributes<HTMLFormElement>) {
   const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      username: '',
       email: '',
       password: '',
       confirmPassword: '',
     },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
-    // eslint-disable-next-line no-console
-    console.log(data)
 
-    setTimeout(() => {
+    try {
+      const { confirmPassword, ...registerData } = data
+      const response = await authApi.register(registerData)
+
+      if (response.code === 0) {
+        toast.success('Registration successful! Please sign in to continue.')
+        navigate({ to: '/sign-in' })
+      } else {
+        // API 返回业务错误（非 HTTP 错误）
+        toast.error(response.message || 'Registration failed')
+      }
+    } catch (error: unknown) {
+      // axios 拦截器已经处理了所有 HTTP 错误和 toast 显示
+      // 这里不需要再显示 toast，只需要记录日志
+      console.error('Registration failed:', error)
+    } finally {
       setIsLoading(false)
-    }, 3000)
+    }
   }
 
   return (
@@ -65,6 +91,19 @@ export function SignUpForm({
         className={cn('grid gap-3', className)}
         {...props}
       >
+        <FormField
+          control={form.control}
+          name='username'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input placeholder='Enter username' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name='email'
@@ -105,7 +144,8 @@ export function SignUpForm({
           )}
         />
         <Button className='mt-2' disabled={isLoading}>
-          Create Account
+          {isLoading ? <Loader2 className='animate-spin' /> : <UserPlus />}
+          {isLoading ? 'Creating Account...' : 'Create Account'}
         </Button>
 
         <div className='relative my-2'>

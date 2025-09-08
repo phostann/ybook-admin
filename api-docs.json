@@ -1,0 +1,2513 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "YBook API",
+    "description": "YBook 项目接口文档",
+    "contact": {
+      "name": "YBook Team"
+    },
+    "license": {
+      "name": "Apache 2.0"
+    },
+    "version": "v1"
+  },
+  "externalDocs": {
+    "description": "Springdoc OpenAPI",
+    "url": "https://springdoc.org"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "Bearer Authentication": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "笔记管理接口",
+      "description": "笔记的增删改查接口"
+    },
+    {
+      "name": "用户管理接口",
+      "description": "用户的增删改查接口"
+    },
+    {
+      "name": "文件上传",
+      "description": "文件上传相关接口"
+    },
+    {
+      "name": "认证接口",
+      "description": "登录、修改密码等认证相关接口"
+    },
+    {
+      "name": "标签管理接口",
+      "description": "标签的增删改查接口"
+    }
+  ],
+  "paths": {
+    "/api/notes": {
+      "get": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "获取我的笔记列表",
+        "description": "获取当前用户的所有笔记",
+        "operationId": "listMyNotes",
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "创建笔记",
+        "description": "创建新的笔记",
+        "operationId": "createNote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "参数校验失败",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/notes/{id}/toggle-pin": {
+      "post": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "切换笔记置顶状态",
+        "description": "切换笔记的置顶状态",
+        "operationId": "togglePin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "笔记不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/labels": {
+      "get": {
+        "tags": [
+          "标签管理接口"
+        ],
+        "summary": "获取标签列表",
+        "description": "返回所有标签",
+        "operationId": "listLabels",
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListLabelVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListLabelVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "标签管理接口"
+        ],
+        "summary": "创建标签",
+        "description": "创建新标签",
+        "operationId": "createLabel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "参数校验失败",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/files/upload": {
+      "post": {
+        "tags": [
+          "文件上传"
+        ],
+        "summary": "上传文件",
+        "description": "上传文件到MinIO存储",
+        "operationId": "uploadFile",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "上传的文件"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上传成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadVO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultFileUploadVO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultFileUploadVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "认证接口"
+        ],
+        "summary": "用户注册",
+        "description": "开放注册接口，创建新用户",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResult"
+                },
+                "examples": {
+                  "成功示例": {
+                    "description": "返回统一结构，data 为用户信息（不包含密码）",
+                    "value": {
+                      "code": 0,
+                      "message": "OK",
+                      "data": {
+                        "id": 1,
+                        "username": "alice",
+                        "email": "alice@example.com",
+                        "status": "1"
+                      },
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "参数校验失败",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "错误示例": {
+                    "description": "错误示例",
+                    "value": {
+                      "code": 42200,
+                      "message": "Validation error",
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "认证接口"
+        ],
+        "summary": "用户登录",
+        "description": "使用用户名和密码进行登录，成功后返回 JWT 令牌",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功，返回令牌",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResult"
+                },
+                "examples": {
+                  "成功示例": {
+                    "description": "返回统一结构，其中 data 为登录令牌",
+                    "value": {
+                      "code": 0,
+                      "message": "OK",
+                      "data": {
+                        "token": "eyJhbGciOiJIUzI1NiJ9.xxx.yyy"
+                      },
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "用户名或密码错误",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "错误示例": {
+                    "description": "错误示例",
+                    "value": {
+                      "code": 40000,
+                      "message": "用户名或密码错误",
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/change-password": {
+      "post": {
+        "tags": [
+          "认证接口"
+        ],
+        "summary": "修改密码",
+        "description": "登录状态下修改当前用户密码",
+        "operationId": "changePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "成功示例": {
+                    "description": "成功示例",
+                    "value": {
+                      "code": 0,
+                      "message": "OK",
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "未认证示例": {
+                    "description": "未认证示例",
+                    "value": {
+                      "code": 40100,
+                      "message": "未认证",
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "旧密码不正确",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "错误示例": {
+                    "description": "错误示例",
+                    "value": {
+                      "code": 40000,
+                      "message": "旧密码不正确",
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "tags": [
+          "用户管理接口"
+        ],
+        "summary": "获取用户详情",
+        "description": "根据用户ID获取用户详细信息",
+        "operationId": "getUserById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultUserVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultUserVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultUserVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "用户管理接口"
+        ],
+        "summary": "删除用户",
+        "description": "根据用户ID删除用户",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultBoolean"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultBoolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultBoolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "用户管理接口"
+        ],
+        "summary": "更新用户",
+        "description": "根据用户ID更新用户的部分信息",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultUserVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultUserVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultUserVO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "参数校验失败",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultUserVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/notes/{id}": {
+      "get": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "获取笔记详情",
+        "description": "根据笔记ID获取笔记详细信息",
+        "operationId": "getNoteDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "笔记不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "删除笔记",
+        "description": "根据ID删除笔记",
+        "operationId": "deleteNote",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultBoolean"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultBoolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "笔记不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultBoolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "更新笔记",
+        "description": "根据ID更新笔记信息",
+        "operationId": "updateNote",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "笔记不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "参数校验失败",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/labels/{id}": {
+      "get": {
+        "tags": [
+          "标签管理接口"
+        ],
+        "summary": "获取标签详情",
+        "description": "根据标签ID获取标签",
+        "operationId": "getLabel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "标签管理接口"
+        ],
+        "summary": "删除标签",
+        "description": "根据ID删除标签",
+        "operationId": "deleteLabel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultBoolean"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultBoolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "标签管理接口"
+        ],
+        "summary": "更新标签",
+        "description": "根据ID更新标签信息",
+        "operationId": "updateLabel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "参数校验失败",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultLabelVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "用户管理接口"
+        ],
+        "summary": "获取用户列表",
+        "description": "返回所有用户的精简信息列表",
+        "operationId": "listUsers",
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListUserVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListUserVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/users/page": {
+      "get": {
+        "tags": [
+          "用户管理接口"
+        ],
+        "summary": "分页获取用户列表",
+        "description": "按页返回用户列表",
+        "operationId": "pageUsers",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页数量",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultUserVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultUserVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/notes/search": {
+      "get": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "搜索笔记",
+        "description": "根据关键词搜索笔记标题和内容",
+        "operationId": "searchNotes",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "搜索关键词",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Spring Boot"
+          },
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页数量",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/notes/page": {
+      "get": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "分页获取我的笔记列表",
+        "description": "按页获取当前用户的笔记列表",
+        "operationId": "pageMyNotes",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页数量",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/notes/by-label/{labelId}": {
+      "get": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "根据标签获取笔记",
+        "description": "获取指定标签下的所有笔记",
+        "operationId": "getNotesByLabel",
+        "parameters": [
+          {
+            "name": "labelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListNoteVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "标签不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultListNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/notes/by-label/{labelId}/page": {
+      "get": {
+        "tags": [
+          "笔记管理接口"
+        ],
+        "summary": "分页获取标签下的笔记",
+        "description": "按页获取指定标签下的笔记",
+        "operationId": "pageNotesByLabel",
+        "parameters": [
+          {
+            "name": "labelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页数量",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultNoteVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultNoteVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "标签不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultNoteVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/labels/page": {
+      "get": {
+        "tags": [
+          "标签管理接口"
+        ],
+        "summary": "分页获取标签列表",
+        "description": "按页返回标签列表",
+        "operationId": "pageLabels",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页数量",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultLabelVO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResultPageResultLabelVO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "tags": [
+          "认证接口"
+        ],
+        "summary": "获取当前用户信息",
+        "description": "获取当前登录用户的个人资料",
+        "operationId": "profile",
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResult"
+                },
+                "examples": {
+                  "成功示例": {
+                    "description": "返回统一结构，data 为当前用户信息（不包含密码）",
+                    "value": {
+                      "code": 0,
+                      "message": "OK",
+                      "data": {
+                        "id": 1,
+                        "username": "alice",
+                        "email": "alice@example.com",
+                        "status": "1",
+                        "createTime": "2025-01-01T10:00:00",
+                        "updateTime": "2025-01-01T10:00:00"
+                      },
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证或令牌无效",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "未认证示例": {
+                    "description": "未认证示例",
+                    "value": {
+                      "code": 40100,
+                      "message": "未认证",
+                      "timestamp": 1712345678901
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "NoteCreateDTO": {
+        "type": "object",
+        "description": "笔记创建数据传输对象",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "笔记标题",
+            "example": "Spring Boot 学习笔记",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "content": {
+            "type": "string",
+            "description": "笔记内容",
+            "example": "## Spring Boot 基础\n\n这是一篇关于Spring Boot的学习笔记...",
+            "maxLength": 50000,
+            "minLength": 0
+          },
+          "images": {
+            "type": "string",
+            "description": "图片，多个图片逗号分隔",
+            "example": "image1.jpg,image2.jpg",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "video": {
+            "type": "string",
+            "description": "视频",
+            "example": "video.mp4",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "类型，1-图文，2-视频",
+            "example": 1,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "content",
+          "title",
+          "type"
+        ]
+      },
+      "ApiResultNoteVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/NoteVO",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "LabelVO": {
+        "type": "object",
+        "description": "标签视图对象",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "标签ID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "标签名称",
+            "example": "科技"
+          },
+          "useCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "标签描述",
+            "example": "与科技相关的内容"
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "NoteVO": {
+        "type": "object",
+        "description": "笔记视图对象",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "笔记ID",
+            "example": 1
+          },
+          "uid": {
+            "type": "integer",
+            "format": "int64",
+            "description": "笔记所属用户ID",
+            "example": 1001
+          },
+          "title": {
+            "type": "string",
+            "description": "笔记标题",
+            "example": "Spring Boot 学习笔记"
+          },
+          "content": {
+            "type": "string",
+            "description": "笔记内容",
+            "example": "## Spring Boot 基础\n\n这是一篇关于Spring Boot的学习笔记..."
+          },
+          "images": {
+            "type": "string",
+            "description": "图片，多个图片逗号分隔",
+            "example": "image1.jpg,image2.jpg"
+          },
+          "video": {
+            "type": "string",
+            "description": "视频",
+            "example": "video.mp4"
+          },
+          "viewCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "浏览次数",
+            "example": 100
+          },
+          "likeCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "点赞次数",
+            "example": 50
+          },
+          "commentCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "评论次数",
+            "example": 20
+          },
+          "collectCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "收藏次数",
+            "example": 30
+          },
+          "isTop": {
+            "type": "string",
+            "description": "是否置顶，0-否，1-是",
+            "example": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "类型，1-图文，2-视频",
+            "example": 1
+          },
+          "labels": {
+            "type": "array",
+            "description": "关联的标签列表",
+            "items": {
+              "$ref": "#/components/schemas/LabelVO"
+            }
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "LabelCreateDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ApiResultLabelVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/LabelVO",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "FileUploadVO": {
+        "type": "object",
+        "description": "文件上传响应",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "文件访问URL",
+            "example": "http://localhost:9000/files/2025/09/07/uuid.jpg"
+          },
+          "originalFileName": {
+            "type": "string",
+            "description": "原始文件名",
+            "example": "image.jpg"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "文件大小(字节)",
+            "example": 1024
+          },
+          "contentType": {
+            "type": "string",
+            "description": "文件类型",
+            "example": "image/jpeg"
+          }
+        }
+      },
+      "ApiResultFileUploadVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/FileUploadVO",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "UserCreateDTO": {
+        "type": "object",
+        "description": "用户创建参数",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "alice",
+            "maxLength": 50,
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "邮箱",
+            "example": "alice@example.com",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "description": "密码",
+            "example": "Abcd1234",
+            "maxLength": 20,
+            "minLength": 6
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像URL",
+            "example": "https://example.com/avatar.png",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "gender": {
+            "type": "string",
+            "description": "性别：0 未知；1 男；2 女",
+            "example": 1
+          },
+          "phone": {
+            "type": "string",
+            "description": "手机号",
+            "example": 13800000000,
+            "maxLength": 20,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "username"
+        ]
+      },
+      "ApiResult": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "LoginRequestDTO": {
+        "type": "object",
+        "description": "登录请求参数",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "admin",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "description": "密码",
+            "example": 123456,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "password",
+          "username"
+        ]
+      },
+      "ChangePasswordRequestDTO": {
+        "type": "object",
+        "description": "修改密码请求参数",
+        "properties": {
+          "oldPassword": {
+            "type": "string",
+            "description": "旧密码",
+            "example": 123456,
+            "minLength": 1
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "新密码",
+            "example": "Abcd1234",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "newPassword",
+          "oldPassword"
+        ]
+      },
+      "UserUpdateDTO": {
+        "type": "object",
+        "description": "用户更新参数（不包含密码和状态）",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "alice",
+            "maxLength": 50,
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "邮箱",
+            "example": "alice@example.com",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像URL",
+            "example": "https://example.com/avatar.png",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "gender": {
+            "type": "string",
+            "description": "性别：0 未知；1 男；2 女",
+            "example": 2
+          }
+        }
+      },
+      "ApiResultUserVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserVO",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "UserVO": {
+        "type": "object",
+        "description": "用户视图对象（不包含密码）",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "用户ID",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "alice"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像URL",
+            "example": "https://example.com/avatar.png"
+          },
+          "gender": {
+            "type": "string",
+            "description": "性别：0 未知；1 男；2 女",
+            "example": 1
+          },
+          "email": {
+            "type": "string",
+            "description": "邮箱",
+            "example": "alice@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "description": "手机号",
+            "example": 13800000000
+          },
+          "status": {
+            "type": "string",
+            "description": "状态：0 禁用；1 正常",
+            "example": 1
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "NoteUpdateDTO": {
+        "type": "object",
+        "description": "笔记更新数据传输对象",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "笔记标题",
+            "example": "Spring Boot 学习笔记（已更新）",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "content": {
+            "type": "string",
+            "description": "笔记内容",
+            "example": "## Spring Boot 基础（已更新）\n\n这是一篇关于Spring Boot的学习笔记...",
+            "maxLength": 50000,
+            "minLength": 0
+          },
+          "images": {
+            "type": "string",
+            "description": "图片，多个图片逗号分隔",
+            "example": "image1.jpg,image2.jpg",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "video": {
+            "type": "string",
+            "description": "视频",
+            "example": "video.mp4",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "类型，1-图文，2-视频",
+            "example": 1
+          }
+        }
+      },
+      "LabelUpdateDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1
+          }
+        }
+      },
+      "ApiResultListUserVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "type": "array",
+            "description": "响应数据",
+            "items": {
+              "$ref": "#/components/schemas/UserVO"
+            }
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "ApiResultPageResultUserVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResultUserVO",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "PageResultUserVO": {
+        "type": "object",
+        "description": "通用分页结果",
+        "properties": {
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "description": "当前页码",
+            "example": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "每页数量",
+            "example": 10
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "总记录数",
+            "example": 100
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "description": "总页数",
+            "example": 10
+          },
+          "records": {
+            "type": "array",
+            "description": "记录列表",
+            "items": {
+              "$ref": "#/components/schemas/UserVO"
+            }
+          }
+        }
+      },
+      "ApiResultListNoteVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "type": "array",
+            "description": "响应数据",
+            "items": {
+              "$ref": "#/components/schemas/NoteVO"
+            }
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "ApiResultPageResultNoteVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResultNoteVO",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "PageResultNoteVO": {
+        "type": "object",
+        "description": "通用分页结果",
+        "properties": {
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "description": "当前页码",
+            "example": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "每页数量",
+            "example": 10
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "总记录数",
+            "example": 100
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "description": "总页数",
+            "example": 10
+          },
+          "records": {
+            "type": "array",
+            "description": "记录列表",
+            "items": {
+              "$ref": "#/components/schemas/NoteVO"
+            }
+          }
+        }
+      },
+      "ApiResultListLabelVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "type": "array",
+            "description": "响应数据",
+            "items": {
+              "$ref": "#/components/schemas/LabelVO"
+            }
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "ApiResultPageResultLabelVO": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResultLabelVO",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      },
+      "PageResultLabelVO": {
+        "type": "object",
+        "description": "通用分页结果",
+        "properties": {
+          "current": {
+            "type": "integer",
+            "format": "int64",
+            "description": "当前页码",
+            "example": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "每页数量",
+            "example": 10
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "总记录数",
+            "example": 100
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64",
+            "description": "总页数",
+            "example": 10
+          },
+          "records": {
+            "type": "array",
+            "description": "记录列表",
+            "items": {
+              "$ref": "#/components/schemas/LabelVO"
+            }
+          }
+        }
+      },
+      "ApiResultBoolean": {
+        "type": "object",
+        "description": "统一返回体",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "业务状态码",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "消息描述",
+            "example": "OK"
+          },
+          "data": {
+            "type": "boolean",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "时间戳（毫秒）",
+            "example": 1712345678901
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer Authentication": {
+        "type": "http",
+        "name": "Bearer Authentication",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

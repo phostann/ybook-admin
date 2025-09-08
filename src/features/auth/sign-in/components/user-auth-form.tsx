@@ -7,7 +7,7 @@ import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { IconFacebook, IconGithub } from '@/assets/brand-icons'
 import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -19,15 +19,14 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
+import { authApi } from '@/features/auth/api'
 
 const formSchema = z.object({
-  email: z.email({
-    error: (iss) => (iss.input === '' ? 'Please enter your email' : undefined),
-  }),
+  username: z.string().min(1, 'Please enter your username'),
   password: z
     .string()
     .min(1, 'Please enter your password')
-    .min(7, 'Password must be at least 7 characters long'),
+    .min(6, 'Password must be at least 6 characters long'),
 })
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLFormElement> {
@@ -46,39 +45,50 @@ export function UserAuthForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
-    // Mock successful authentication
-    const mockUser = {
-      accountNo: 'ACC001',
-      email: data.email,
-      role: ['user'],
-      exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
-    }
+    try {
+      const response = await authApi.login(data)
 
-    toast.promise(sleep(2000), {
-      loading: 'Signing in...',
-      success: () => {
-        setIsLoading(false)
+      if (response.code === 0) {
+        // 登录成功，设置 token
+        auth.setAccessToken(response.data.token)
 
-        // Set user and access token
-        auth.setUser(mockUser)
-        auth.setAccessToken('mock-access-token')
+        // 获取用户信息
+        try {
+          const profileResponse = await authApi.profile()
+          if (profileResponse.code === 0) {
+            auth.setUser(profileResponse.data)
+            toast.success(`Welcome back, ${profileResponse.data.username}!`)
+          } else {
+            toast.success('Login successful!')
+          }
+        } catch (profileError) {
+          // axios 拦截器已处理错误显示，这里只需要记录
+          console.error('获取用户信息失败:', profileError)
+          toast.success('Login successful!')
+        }
 
-        // Redirect to the stored location or default to dashboard
+        // 重定向到目标页面或首页
         const targetPath = redirectTo || '/'
         navigate({ to: targetPath, replace: true })
-
-        return `Welcome back, ${data.email}!`
-      },
-      error: 'Error',
-    })
+      } else {
+        // API 返回业务错误（非 HTTP 错误）
+        toast.error(response.message || 'Login failed')
+      }
+    } catch (error: unknown) {
+      // axios 拦截器已经处理了所有 HTTP 错误和 toast 显示
+      // 这里不需要再显示 toast，只需要记录日志
+      console.error('Login failed:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -90,12 +100,12 @@ export function UserAuthForm({
       >
         <FormField
           control={form.control}
-          name='email'
+          name='username'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder='name@example.com' {...field} />
+                <Input placeholder='Enter your username' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
