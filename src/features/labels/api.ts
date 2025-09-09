@@ -1,50 +1,20 @@
 import type { ApiResult, PageResult } from '@/lib/api-types'
 import { apiClient } from '@/lib/axios'
-
-// Labels 相关的请求和响应类型
-export interface LabelCreateRequest {
-  name: string
-}
-
-export interface LabelUpdateRequest {
-  name?: string
-}
-
-export interface LabelResponse {
-  id: number
-  name: string
-  useCount: number
-  createTime: string
-  updateTime: string
-}
-
-// Additional component-specific types
-export interface LabelFormData {
-  name: string
-}
-
-export interface LabelDialogProps {
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  label?: LabelResponse | null
-  mode?: 'create' | 'edit'
-  onSuccess?: () => void
-}
-
-export interface LabelActionsProps {
-  label: LabelResponse
-  onEdit?: (label: LabelResponse) => void
-  onDelete?: (id: number) => void
-}
+import type {
+  LabelCreateRequest,
+  LabelUpdateRequest,
+  LabelResponse,
+} from './types'
 
 // Labels API 服务
 export const labelsApi = {
   /**
    * 获取标签列表
    */
-  list: async (): Promise<ApiResult<LabelResponse[]>> => {
+  list: async (name?: string): Promise<ApiResult<LabelResponse[]>> => {
     const response = await apiClient.get<ApiResult<LabelResponse[]>>(
-      '/api/labels'
+      '/api/labels',
+      { params: name ? { name } : undefined }
     )
     return response.data
   },

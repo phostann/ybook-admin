@@ -10,7 +10,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { LabelResponse } from '../api'
+import type { LabelResponse } from '../types'
 import { useLabels } from './labels-provider'
 
 type DataTableRowActionsProps = {

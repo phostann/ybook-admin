@@ -22,7 +22,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { labelsApi, type LabelResponse } from '../api'
+import { labelsApi } from '../api'
+import type { LabelResponse } from '../types'
 
 // Form validation schema
 const labelFormSchema = z.object({

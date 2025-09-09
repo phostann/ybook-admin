@@ -58,3 +58,24 @@ export function getPageNumbers(currentPage: number, totalPages: number) {
 
   return rangeWithDots
 }
+
+/**
+ * Formats a date string or Date object to a human-readable format
+ * @param date - Date string or Date object
+ * @returns Formatted date string
+ */
+export function formatDate(date: string | Date): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  
+  if (isNaN(dateObj.getTime())) {
+    return 'Invalid Date'
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(dateObj)
+}

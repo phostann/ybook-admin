@@ -10,7 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { labelsApi, type LabelResponse } from '../api'
+import { labelsApi } from '../api'
+import type { LabelResponse } from '../types'
 
 type LabelsDeleteDialogProps = {
   open?: boolean

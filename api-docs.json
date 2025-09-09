@@ -205,8 +205,20 @@
           "标签管理接口"
         ],
         "summary": "获取标签列表",
-        "description": "返回所有标签",
+        "description": "返回所有标签，支持按名称模糊匹配",
         "operationId": "listLabels",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "标签名称（模糊匹配）",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "技术"
+          }
+        ],
         "responses": {
           "401": {
             "description": "未认证或令牌无效",
