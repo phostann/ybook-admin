@@ -3,11 +3,12 @@ import { Eye, Heart, MessageCircle, Pin, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog'
 import { DataTableColumnHeader } from '@/components/data-table'
 import { formatDate } from '@/lib/utils'
 import { NoteType, type NoteResponse } from '../api'
 import { NotesActions } from './notes-actions'
+import { DialogTitle } from '@radix-ui/react-dialog'
 
 export const notesColumns: ColumnDef<NoteResponse>[] = [
   {
@@ -90,8 +91,10 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
               </Button>
             </DialogTrigger>
             <DialogContent className='max-w-4xl'>
+              <DialogHeader>
+                <DialogTitle>{note.title}</DialogTitle>
+              </DialogHeader>
               <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>{note.title}</h3>
                 <video
                   src={note.video}
                   controls

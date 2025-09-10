@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useRef, useState } from 'react'
+import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Upload, X, Image, Video } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Image, Upload, Video, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -23,8 +24,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import TiptapEditor from '@/components/ui/tiptap-editor'
-import { LabelsExtension } from '@/lib/tiptap-labels-extension'
 import {
   Select,
   SelectContent,
@@ -32,13 +31,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from 'sonner'
-import { notesApi, uploadApi, NoteType, type NoteCreateRequest } from '../api'
+import { Editor } from '@/components/editor'
+import { notesApi, NoteType, uploadApi, type NoteCreateRequest } from '../api'
 import { useNotesContext } from './notes-provider'
 
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title is too long'),
-  content: z.string().min(1, 'Content is required').max(50000, 'Content is too long'),
+  content: z
+    .string()
+    .min(1, 'Content is required')
+    .max(50000, 'Content is too long'),
   type: z.nativeEnum(NoteType),
 })
 
@@ -50,12 +52,13 @@ interface FilePreview {
 }
 
 export function NotesCreateDialog() {
-  const { isCreateDialogOpen, setIsCreateDialogOpen, refreshTable } = useNotesContext()
+  const { isCreateDialogOpen, setIsCreateDialogOpen, refreshTable } =
+    useNotesContext()
   const [isLoading, setIsLoading] = useState(false)
   const [imageFiles, setImageFiles] = useState<FilePreview[]>([])
   const [videoFile, setVideoFile] = useState<FilePreview | null>(null)
   const [videoPoster, setVideoPoster] = useState<string | null>(null)
-  
+
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -86,26 +89,30 @@ export function NotesCreateDialog() {
         canvas.height = video.videoHeight
         const ctx = canvas.getContext('2d')
         ctx?.drawImage(video, 0, 0)
-        
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const posterUrl = URL.createObjectURL(blob)
-            resolve(posterUrl)
-          }
-        }, 'image/jpeg', 0.8)
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const posterUrl = URL.createObjectURL(blob)
+              resolve(posterUrl)
+            }
+          },
+          'image/jpeg',
+          0.8
+        )
       })
     })
   }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    files.forEach(file => {
+    files.forEach((file) => {
       if (file.type.startsWith('image/')) {
         const preview: FilePreview = {
           file,
-          url: URL.createObjectURL(file)
+          url: URL.createObjectURL(file),
         }
-        setImageFiles(prev => [...prev, preview])
+        setImageFiles((prev) => [...prev, preview])
       }
     })
   }
@@ -115,10 +122,10 @@ export function NotesCreateDialog() {
     if (file && file.type.startsWith('video/')) {
       const videoPreview: FilePreview = {
         file,
-        url: URL.createObjectURL(file)
+        url: URL.createObjectURL(file),
       }
       setVideoFile(videoPreview)
-      
+
       // Generate poster
       try {
         const poster = await generateVideoPoster(file)
@@ -130,7 +137,7 @@ export function NotesCreateDialog() {
   }
 
   const removeImage = (index: number) => {
-    setImageFiles(prev => {
+    setImageFiles((prev) => {
       const newFiles = [...prev]
       URL.revokeObjectURL(newFiles[index].url)
       newFiles.splice(index, 1)
@@ -152,26 +159,30 @@ export function NotesCreateDialog() {
   const createMutation = useMutation({
     mutationFn: async (data: NoteFormValues) => {
       setIsLoading(true)
-      
+
       // Upload files
       let imageUrls: string[] = []
       let videoUrl = ''
       let posterUrl = ''
 
       if (data.type === NoteType.IMAGE_TEXT && imageFiles.length > 0) {
-        const imageResults = await uploadApi.uploadMultiple(imageFiles.map(f => f.file))
-        imageUrls = imageResults.map(result => result.url)
+        const imageResults = await uploadApi.uploadMultiple(
+          imageFiles.map((f) => f.file)
+        )
+        imageUrls = imageResults.map((result) => result.url)
       }
 
       if (data.type === NoteType.VIDEO && videoFile) {
         const videoResult = await uploadApi.upload(videoFile.file)
         videoUrl = videoResult.data.url
-        
+
         // Upload video poster as the image
         if (videoPoster) {
           const response = await fetch(videoPoster)
           const blob = await response.blob()
-          const posterFile = new File([blob], 'poster.jpg', { type: 'image/jpeg' })
+          const posterFile = new File([blob], 'poster.jpg', {
+            type: 'image/jpeg',
+          })
           const posterResult = await uploadApi.upload(posterFile)
           posterUrl = posterResult.data.url
         }
@@ -181,9 +192,8 @@ export function NotesCreateDialog() {
         title: data.title,
         content: data.content,
         type: data.type,
-        images: data.type === NoteType.IMAGE_TEXT 
-          ? imageUrls.join(',') 
-          : posterUrl, // Use poster for video type
+        images:
+          data.type === NoteType.IMAGE_TEXT ? imageUrls.join(',') : posterUrl, // Use poster for video type
         video: data.type === NoteType.VIDEO ? videoUrl : undefined,
       }
 
@@ -203,7 +213,7 @@ export function NotesCreateDialog() {
       refreshTable()
       // Force close dialog immediately without checking isLoading
       form.reset()
-      imageFiles.forEach(file => URL.revokeObjectURL(file.url))
+      imageFiles.forEach((file) => URL.revokeObjectURL(file.url))
       setImageFiles([])
       if (videoFile) {
         URL.revokeObjectURL(videoFile.url)
@@ -225,24 +235,25 @@ export function NotesCreateDialog() {
   })
 
   const onSubmit = (data: NoteFormValues) => {
+    console.log('Submitting note:', data)
     // Validation based on note type
-    if (data.type === NoteType.IMAGE_TEXT && imageFiles.length === 0) {
-      toast.error('Please upload at least one image for Image & Text note')
-      return
-    }
-    if (data.type === NoteType.VIDEO && !videoFile) {
-      toast.error('Please upload a video for Video note')
-      return
-    }
+    // if (data.type === NoteType.IMAGE_TEXT && imageFiles.length === 0) {
+    //   toast.error('Please upload at least one image for Image & Text note')
+    //   return
+    // }
+    // if (data.type === NoteType.VIDEO && !videoFile) {
+    //   toast.error('Please upload a video for Video note')
+    //   return
+    // }
 
-    createMutation.mutate(data)
+    // createMutation.mutate(data)
   }
 
   const handleClose = () => {
     if (!isLoading) {
       form.reset()
       // Clean up file URLs
-      imageFiles.forEach(file => URL.revokeObjectURL(file.url))
+      imageFiles.forEach((file) => URL.revokeObjectURL(file.url))
       setImageFiles([])
       if (videoFile) {
         URL.revokeObjectURL(videoFile.url)
@@ -264,7 +275,7 @@ export function NotesCreateDialog() {
 
   return (
     <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogClose}>
-      <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Create Note</DialogTitle>
           <DialogDescription>
@@ -327,11 +338,16 @@ export function NotesCreateDialog() {
                 <FormItem>
                   <FormLabel>Content</FormLabel>
                   <FormControl>
-                    <TiptapEditor
+                    {/* <TiptapEditor
                       placeholder='Write your note content here... Use # to mention labels'
                       content={field.value}
                       onChange={field.onChange}
                       extensions={[LabelsExtension]} // 传入 labels 插件
+                    /> */}
+                    <Editor
+                      className='border-border bg-background focus:ring-ring min-h-40 w-full border border-solid p-2 text-sm shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none rounded-lg'
+                      content={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormDescription>
@@ -346,7 +362,7 @@ export function NotesCreateDialog() {
             {watchedType === NoteType.IMAGE_TEXT && (
               <div className='space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium mb-2'>
+                  <label className='mb-2 block text-sm font-medium'>
                     Images (Required - at least 1 image)
                   </label>
                   <Button
@@ -367,15 +383,15 @@ export function NotesCreateDialog() {
                     onChange={handleImageSelect}
                   />
                 </div>
-                
+
                 {imageFiles.length > 0 && (
-                  <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                  <div className='grid grid-cols-2 gap-3 md:grid-cols-3'>
                     {imageFiles.map((file, index) => (
-                      <div key={index} className='relative aspect-[3/4] group'>
+                      <div key={index} className='group relative aspect-[3/4]'>
                         <img
                           src={file.url}
                           alt={`Preview ${index + 1}`}
-                          className='w-full h-full object-cover rounded-lg border shadow-sm group-hover:shadow-md transition-shadow'
+                          className='h-full w-full rounded-lg border object-cover shadow-sm transition-shadow group-hover:shadow-md'
                         />
                         <Button
                           type='button'
@@ -396,7 +412,7 @@ export function NotesCreateDialog() {
             {watchedType === NoteType.VIDEO && (
               <div className='space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium mb-2'>
+                  <label className='mb-2 block text-sm font-medium'>
                     Video (Required)
                   </label>
                   <Button
@@ -416,14 +432,14 @@ export function NotesCreateDialog() {
                     onChange={handleVideoSelect}
                   />
                 </div>
-                
+
                 {videoFile && (
                   <div className='relative'>
                     <video
                       ref={videoRef}
                       src={videoFile.url}
                       controls
-                      className='w-full max-h-48 rounded border'
+                      className='max-h-48 w-full rounded border'
                     />
                     <Button
                       type='button'
