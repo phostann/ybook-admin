@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import TiptapEditor from '@/components/ui/tiptap-editor'
+import { LabelsExtension } from '@/lib/tiptap-labels-extension'
 import {
   Select,
   SelectContent,
@@ -395,6 +396,7 @@ export function NotesEditDialog() {
                       placeholder='Write your note content here... Use # to mention labels'
                       content={field.value}
                       onChange={field.onChange}
+                      extensions={[LabelsExtension]} // 传入 labels 插件
                     />
                   </FormControl>
                   <FormDescription>

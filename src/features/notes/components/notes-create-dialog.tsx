@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import TiptapEditor from '@/components/ui/tiptap-editor'
+import { LabelsExtension } from '@/lib/tiptap-labels-extension'
 import {
   Select,
   SelectContent,
@@ -38,7 +39,7 @@ import { useNotesContext } from './notes-provider'
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title is too long'),
   content: z.string().min(1, 'Content is required').max(50000, 'Content is too long'),
-  type: z.nativeEnum(NoteType, { required_error: 'Please select a note type' }),
+  type: z.nativeEnum(NoteType),
 })
 
 type NoteFormValues = z.infer<typeof noteFormSchema>
@@ -330,6 +331,7 @@ export function NotesCreateDialog() {
                       placeholder='Write your note content here... Use # to mention labels'
                       content={field.value}
                       onChange={field.onChange}
+                      extensions={[LabelsExtension]} // 传入 labels 插件
                     />
                   </FormControl>
                   <FormDescription>
