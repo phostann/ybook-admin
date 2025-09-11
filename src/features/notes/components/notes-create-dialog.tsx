@@ -1,10 +1,4 @@
-import { useRef, useState } from 'react'
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Image, Upload, Video, X } from 'lucide-react'
-import { toast } from 'sonner'
+import { Editor } from '@/components/editor'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -31,7 +25,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Editor } from '@/components/editor'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Image, Upload, Video, X } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
 import { notesApi, NoteType, uploadApi, type NoteCreateRequest } from '../api'
 import { useNotesContext } from './notes-provider'
 
@@ -346,6 +346,7 @@ export function NotesCreateDialog() {
                     /> */}
                     <Editor
                       className='border-border bg-background focus:ring-ring min-h-40 w-full border border-solid p-2 text-sm shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none rounded-lg'
+                      showLabelSelector
                       content={field.value}
                       onChange={field.onChange}
                     />
