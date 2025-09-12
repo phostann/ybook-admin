@@ -15,6 +15,7 @@ export interface NoteCreateRequest {
   images?: string // 多个图片逗号分隔
   video?: string
   type: NoteType
+  labelIds?: number[] // 可选的标签ID数组
 }
 
 export interface NoteUpdateRequest {

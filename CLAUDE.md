@@ -22,12 +22,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a React admin dashboard built with modern tooling and feature-based architecture:
 
 ### Core Stack
-- **Frontend**: React 19 with TypeScript
+- **Frontend**: React 19.1.1 with TypeScript
 - **Build Tool**: Vite with SWC for fast compilation
 - **Routing**: TanStack Router with file-based routing and type safety
 - **UI Framework**: Shadcn/ui components (RadixUI + TailwindCSS)
 - **State Management**: Zustand for client state, TanStack Query for server state
-- **Authentication**: Clerk (partial implementation)
+- **Authentication**: Custom JWT-based authentication with YBook API
 - **Styling**: TailwindCSS v4 with custom component system
 
 ### Project Structure
@@ -37,6 +37,8 @@ This is a React admin dashboard built with modern tooling and feature-based arch
   - `auth/` - Authentication components and logic
   - `dashboard/` - Dashboard views and widgets
   - `users/`, `tasks/`, `chats/`, `apps/` - Domain-specific features
+  - `labels/` - Labels management with CRUD operations and server-side pagination
+  - `notes/` - Notes management with rich text editing capabilities
   - `settings/` - Application configuration and preferences
   - `errors/` - Error boundary components and error pages
 
@@ -45,13 +47,15 @@ This is a React admin dashboard built with modern tooling and feature-based arch
 - `src/routes/(auth)/` - Authentication routes (sign-in, sign-up)
 - `src/routes/(errors)/` - Error pages (404, 500, etc.)
 - `src/routes/_authenticated/` - Protected routes requiring authentication
-- `src/routes/clerk/` - Clerk-specific authentication flows
+  - `/labels` - Labels management interface
+  - `/notes` - Notes management with rich text editor
 
 #### Core Directories
 - `src/components/` - Reusable UI components
   - `ui/` - Shadcn/ui components (some customized for RTL support)
   - `layout/` - Layout components (sidebar, header, etc.)
   - `data-table/` - Reusable data table components
+  - `editor.tsx` - Advanced rich text editor with label integration and autocomplete
 - `src/stores/` - Zustand stores for global state
 - `src/lib/` - Utility functions and configurations
 - `src/hooks/` - Custom React hooks
@@ -89,7 +93,7 @@ This is a React admin dashboard built with modern tooling and feature-based arch
 - Follow the feature-based organization for new functionality
 
 ### Code Quality Standards
-- ESLint enforces no-console errors and unused variable detection
+- ESLint enforces unused variable detection (console logging allowed)
 - Prettier handles code formatting with specific import ordering
 - TypeScript strict mode with consistent type imports
 
@@ -111,10 +115,32 @@ This is a React admin dashboard built with modern tooling and feature-based arch
 - **Auth API**: `src/features/auth/api.ts` - API service functions for authentication
 - **AuthInitializer**: `src/components/auth-initializer.tsx` - **Already integrated in main.tsx** - Initializes auth state on app startup
 
+### Rich Text Editor
+- **Location**: `src/components/editor.tsx`
+- **Features**: 
+  - Label insertion with `#` trigger for autocomplete
+  - Real-time label suggestions from API
+  - Custom contentEditable implementation with styled label chips
+  - Automatic label styling with colored backgrounds
+  - Integration with labels management system
+
+### Labels Management System
+- **Location**: `src/features/labels/`
+- **Features**: Complete CRUD operations with server-side pagination
+- **API Integration**: `/api/labels/*` endpoints for all operations
+- **Components**: Data tables, forms, and modal interfaces
+- **Integration**: Used throughout the app for categorizing notes and content
+
+### Notes Management System  
+- **Location**: `src/features/notes/`
+- **Features**: Full note management with rich text editing
+- **Integration**: Works with labels system and rich text editor
+- **API Integration**: Complete CRUD operations for notes
+
 ## API Documentation
 
 ### Base Configuration
-- **Base URL**: `http://localhost:8080`
+- **Base URL**: `http://localhost:8080` (configurable via `VITE_API_BASE_URL`)
 - **Authentication**: Bearer JWT token in Authorization header
 - **API Version**: v1
 
@@ -213,6 +239,20 @@ This is a React admin dashboard built with modern tooling and feature-based arch
   }
   ```
 - **Error Response (401)**: Unauthorized/invalid token
+
+### Labels Management Endpoints
+- **Base Path**: `/api/labels`
+- **CRUD Operations**: Full create, read, update, delete functionality
+- **Pagination**: Server-side pagination support for large datasets
+- **Authentication**: All endpoints require Bearer token authorization
+- **Usage**: Integrated with rich text editor for label suggestions and autocomplete
+
+### Notes Management Endpoints  
+- **Base Path**: `/api/notes`
+- **CRUD Operations**: Full note management functionality
+- **Rich Content**: Supports rich text content with embedded labels
+- **Authentication**: All endpoints require Bearer token authorization
+- **Integration**: Works seamlessly with labels system and rich text editor
 
 ### Error Response Format
 All API endpoints return errors in this format:

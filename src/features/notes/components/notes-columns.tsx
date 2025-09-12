@@ -1,14 +1,19 @@
+import { DialogTitle } from '@radix-ui/react-dialog'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Eye, Heart, MessageCircle, Pin, Star } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog'
-import { DataTableColumnHeader } from '@/components/data-table'
 import { formatDate } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { DataTableColumnHeader } from '@/components/data-table'
 import { NoteType, type NoteResponse } from '../api'
 import { NotesActions } from './notes-actions'
-import { DialogTitle } from '@radix-ui/react-dialog'
 
 export const notesColumns: ColumnDef<NoteResponse>[] = [
   {
@@ -33,8 +38,8 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
     enableSorting: false,
     enableHiding: false,
     meta: {
-      className: 'w-[40px]'
-    }
+      className: 'w-[40px]',
+    },
   },
   {
     accessorKey: 'title',
@@ -49,15 +54,17 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
             {note.isTop === '1' && <Pin className='h-3 w-3 text-orange-500' />}
             <span className='font-medium'>{note.title}</span>
           </div>
-          <div className='text-xs text-muted-foreground line-clamp-2'>
-            {note.content}
-          </div>
+          <div
+            className='text-muted-foreground line-clamp-2 text-xs'
+            dangerouslySetInnerHTML={{ __html: note.content }}
+            suppressContentEditableWarning
+          ></div>
         </div>
       )
     },
     meta: {
-      className: 'min-w-[200px] max-w-[300px]'
-    }
+      className: 'min-w-[200px] max-w-[300px]',
+    },
   },
   {
     accessorKey: 'type',
@@ -71,22 +78,24 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
       )
     },
     meta: {
-      className: 'w-[100px]'
-    }
+      className: 'w-[100px]',
+    },
   },
   {
     id: 'media',
     header: 'Media',
     cell: ({ row }) => {
       const note = row.original
-      const images = note.images ? note.images.split(',').filter(url => url.trim()) : []
-      
+      const images = note.images
+        ? note.images.split(',').filter((url) => url.trim())
+        : []
+
       if (note.type === NoteType.VIDEO && note.video) {
         return (
           <Dialog>
             <DialogTrigger asChild>
               <Button variant='outline' size='sm'>
-                <Eye className='h-3 w-3 mr-1' />
+                <Eye className='mr-1 h-3 w-3' />
                 View Video
               </Button>
             </DialogTrigger>
@@ -98,7 +107,7 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
                 <video
                   src={note.video}
                   controls
-                  className='w-full max-h-[70vh] rounded border'
+                  className='max-h-[70vh] w-full rounded border'
                   poster={images[0] || undefined}
                 />
               </div>
@@ -106,26 +115,26 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
           </Dialog>
         )
       }
-      
+
       if (note.type === NoteType.IMAGE_TEXT && images.length > 0) {
         return (
           <Dialog>
             <DialogTrigger asChild>
               <Button variant='outline' size='sm'>
-                <Eye className='h-3 w-3 mr-1' />
+                <Eye className='mr-1 h-3 w-3' />
                 View Images ({images.length})
               </Button>
             </DialogTrigger>
             <DialogContent className='max-w-4xl'>
               <div className='space-y-4'>
                 <h3 className='text-lg font-semibold'>{note.title}</h3>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto'>
+                <div className='grid max-h-[70vh] grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2'>
                   {images.map((imageUrl, index) => (
                     <img
                       key={index}
                       src={imageUrl.trim()}
                       alt={`Image ${index + 1}`}
-                      className='w-full h-auto rounded border'
+                      className='h-auto w-full rounded border'
                     />
                   ))}
                 </div>
@@ -134,13 +143,13 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
           </Dialog>
         )
       }
-      
+
       return <span className='text-muted-foreground text-sm'>No media</span>
     },
     enableSorting: false,
     meta: {
-      className: 'w-[120px]'
-    }
+      className: 'w-[120px]',
+    },
   },
   {
     accessorKey: 'labels',
@@ -151,7 +160,7 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
         return <span className='text-muted-foreground'>No labels</span>
       }
       return (
-        <div className='flex gap-1 flex-wrap'>
+        <div className='flex flex-wrap gap-1'>
           {labels.slice(0, 2).map((label) => (
             <Badge key={label.id} variant='outline' className='text-xs'>
               {label.name}
@@ -167,8 +176,8 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
     },
     enableSorting: false,
     meta: {
-      className: 'min-w-[120px] max-w-[180px]'
-    }
+      className: 'min-w-[120px] max-w-[180px]',
+    },
   },
   {
     id: 'stats',
@@ -176,7 +185,7 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
     cell: ({ row }) => {
       const note = row.original
       return (
-        <div className='flex items-center gap-3 text-xs text-muted-foreground'>
+        <div className='text-muted-foreground flex items-center gap-3 text-xs'>
           <span className='flex items-center gap-1'>
             <Eye className='h-3 w-3' />
             {note.viewCount}
@@ -198,8 +207,8 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
     },
     enableSorting: false,
     meta: {
-      className: 'w-[200px]'
-    }
+      className: 'w-[200px]',
+    },
   },
   {
     accessorKey: 'createTime',
@@ -208,14 +217,14 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
     ),
     cell: ({ row }) => {
       return (
-        <div className='text-sm text-muted-foreground'>
+        <div className='text-muted-foreground text-sm'>
           {formatDate(row.getValue('createTime'))}
         </div>
       )
     },
     meta: {
-      className: 'w-[140px]'
-    }
+      className: 'w-[140px]',
+    },
   },
   {
     accessorKey: 'updateTime',
@@ -224,20 +233,20 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
     ),
     cell: ({ row }) => {
       return (
-        <div className='text-sm text-muted-foreground'>
+        <div className='text-muted-foreground text-sm'>
           {formatDate(row.getValue('updateTime'))}
         </div>
       )
     },
     meta: {
-      className: 'w-[140px]'
-    }
+      className: 'w-[140px]',
+    },
   },
   {
     id: 'actions',
     cell: ({ row }) => <NotesActions note={row.original} />,
     meta: {
-      className: 'w-[60px]'
-    }
+      className: 'w-[60px]',
+    },
   },
 ]

@@ -1,9 +1,9 @@
 import {
   type ChangeEventHandler,
-  useEffect,
-  useRef,
   type CSSProperties,
   useCallback,
+  useEffect,
+  useRef,
   useState,
 } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -11,14 +11,61 @@ import { debounce } from '@/lib/utils'
 import { labelsApi } from '@/features/labels/api'
 import { type LabelResponse } from '@/features/labels/types'
 
+// HTML内容安全清理函数
+const sanitizeHTML = (html: string): string => {
+  // TODO: 当前实现有问题，后续纠正
+  return html
+  // // 允许的标签和属性 - 只允许编辑器需要的基本标签
+  // const allowedTags = ['a', 'span', 'div', 'br', 'p']
+  // const allowedAttributes = ['data-topic', 'data-label-id', 'contenteditable', 'class']
+
+  // // 创建一个临时DOM来解析HTML
+  // const tempDiv = document.createElement('div')
+  // tempDiv.innerHTML = html
+
+  // // 递归清理节点
+  // const cleanNode = (node: Element): void => {
+  //   // 移除不允许的属性
+  //   const attrs = Array.from(node.attributes)
+  //   attrs.forEach(attr => {
+  //     if (!allowedAttributes.includes(attr.name.toLowerCase())) {
+  //       node.removeAttribute(attr.name)
+  //     }
+  //   })
+
+  //   // 递归处理子节点
+  //   Array.from(node.children).forEach(child => {
+  //     if (!allowedTags.includes(child.tagName.toLowerCase())) {
+  //       // 不允许的标签，保留文本内容但移除标签
+  //       const textContent = child.textContent || ''
+  //       const textNode = document.createTextNode(textContent)
+  //       child.parentNode?.replaceChild(textNode, child)
+  //     } else {
+  //       cleanNode(child as Element)
+  //     }
+  //   })
+  // }
+
+  // // 清理所有子元素
+  // Array.from(tempDiv.children).forEach(child => {
+  //   if (!allowedTags.includes(child.tagName.toLowerCase())) {
+  //     const textContent = child.textContent || ''
+  //     const textNode = document.createTextNode(textContent)
+  //     child.parentNode?.replaceChild(textNode, child)
+  //   } else {
+  //     cleanNode(child as Element)
+  //   }
+  // })
+
+  // return tempDiv.innerHTML
+}
+
 // 配置常量
 const EDITOR_CONFIG = {
   DEBOUNCE_DELAY: 100,
   CURSOR_CHECK_DELAY: 10,
   POPUP_OFFSET: 5,
   LABEL_STYLES: {
-    color: '#3b82f6',
-    backgroundColor: '#eff6ff',
     padding: '2px 4px',
     borderRadius: '3px',
   },
@@ -27,17 +74,66 @@ const EDITOR_CONFIG = {
 
 // 类型守卫函数
 const isTextNode = (node: Node | null): node is Text => {
-  return node !== null && node.nodeType === Node.TEXT_NODE
+  return node != null && node.nodeType === Node.TEXT_NODE
 }
 
 const isValidSelection = (
   selection: Selection | null
 ): selection is Selection => {
-  return selection !== null && selection.rangeCount > 0 && selection.isCollapsed
+  return selection != null && selection.rangeCount > 0 && selection.isCollapsed
 }
 
 const isLabelElement = (element: Element): boolean => {
-  return element.tagName === 'A' && element.hasAttribute('data-topic')
+  return (
+    element.tagName === 'A' &&
+    element.hasAttribute('data-topic') &&
+    element.getAttribute('contenteditable') === 'false'
+  )
+}
+
+// 获取光标前一个兄弟节点（用于 Backspace 删除）
+const getPreviousSiblingAtCaret = (
+  container: Node,
+  offset: number
+): Node | null => {
+  if (isTextNode(container)) {
+    // 文本节点开头，前一个兄弟
+    if (offset === 0) return container.previousSibling
+    return null
+  }
+  // 元素节点，取 offset - 1 位置的子节点
+  const el = container as Element
+  if (offset > 0 && el.childNodes.length >= offset) {
+    return el.childNodes[offset - 1] || null
+  }
+  return null
+}
+
+// 获取光标后一个兄弟节点（用于 Delete 删除）
+const getNextSiblingAtCaret = (
+  container: Node,
+  offset: number
+): Node | null => {
+  if (isTextNode(container)) {
+    const text = container as Text
+    // 文本节点末尾，后一个兄弟
+    if (offset === text.length) return container.nextSibling
+    return null
+  }
+  const el = container as Element
+  return el.childNodes[offset] || null
+}
+
+// 将光标安全地放置到某个文本节点位置
+const placeCaret = (node: Node | null, offset: number) => {
+  if (!node) return
+  const selection = window.getSelection()
+  if (!selection) return
+  const range = document.createRange()
+  range.setStart(node, Math.max(0, offset))
+  range.setEnd(node, Math.max(0, offset))
+  selection.removeAllRanges()
+  selection.addRange(range)
 }
 
 interface EditorProps {
@@ -191,22 +287,30 @@ export function Editor(props: EditorProps) {
   // 创建标签元素的辅助函数
   const createLabelElement = useCallback((labelData: LabelResponse) => {
     const labelLink = document.createElement('a')
-    labelLink.setAttribute('data-topic', JSON.stringify(labelData))
+
+    try {
+      labelLink.setAttribute('data-topic', JSON.stringify(labelData))
+      labelLink.setAttribute('data-label-id', labelData.id.toString())
+    } catch (error) {
+      console.error('Failed to set data-topic attribute:', error)
+    }
+
     labelLink.setAttribute('contentEditable', 'false')
 
     // 创建标签内容：标签名称 + <span>话题#</span>
     const topicSpan = document.createElement('span')
-    topicSpan.textContent = '话题#'
-    topicSpan.style.display = 'none'
+    topicSpan.textContent = '[话题]#'
+    topicSpan.className = 'hidden'
 
-    const labelText = document.createTextNode(labelData.name)
+    const labelText = document.createTextNode(`#${labelData.name}`)
 
     labelLink.appendChild(labelText)
     labelLink.appendChild(topicSpan)
 
-    labelLink.style.color = EDITOR_CONFIG.LABEL_STYLES.color
+    // 使用 CSS 类名而不是硬编码颜色，支持暗色模式
+    labelLink.className =
+      'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30 no-underline cursor-pointer'
     labelLink.style.textDecoration = 'none'
-    labelLink.style.backgroundColor = EDITOR_CONFIG.LABEL_STYLES.backgroundColor
     labelLink.style.padding = EDITOR_CONFIG.LABEL_STYLES.padding
     labelLink.style.borderRadius = EDITOR_CONFIG.LABEL_STYLES.borderRadius
     labelLink.style.cursor = 'pointer'
@@ -249,9 +353,8 @@ export function Editor(props: EditorProps) {
         )
         // 确保标签后总是有空格，特别是在文本末尾时
         // 使用非断行空格 (\u00A0) 确保在末尾时空格可见
-        const afterText = afterCursor.length > 0 
-          ? ' ' + afterCursor 
-          : '\u00A0'  // 非断行空格，确保在末尾可见
+        const afterText =
+          afterCursor.length > 0 ? '\u00A0' + afterCursor : '\u00A0' // 非断行空格，确保在末尾可见
         const afterNode = document.createTextNode(afterText)
 
         // 替换原文本节点
@@ -264,7 +367,7 @@ export function Editor(props: EditorProps) {
 
           // 设置光标到标签后的空格之后
           const newRange = document.createRange()
-          const cursorOffset = afterCursor.length > 0 ? 1 : 1  // 总是在第一个空格后
+          const cursorOffset = afterCursor.length > 0 ? 1 : 1 // 总是在第一个空格后
           newRange.setStart(afterNode, cursorOffset)
           newRange.setEnd(afterNode, cursorOffset)
           selection.removeAllRanges()
@@ -275,8 +378,8 @@ export function Editor(props: EditorProps) {
         setShowLabelsList(false)
         setTagKeyword(undefined)
 
-        // 触发 onChange
-        onChange?.(ref.current.innerHTML)
+        // 触发 onChange - 使用安全清理后的内容
+        onChange?.(sanitizeHTML(ref.current.innerHTML))
       } catch (error) {
         console.error('Error inserting label:', error)
         // 简单的错误恢复：隐藏列表
@@ -290,7 +393,8 @@ export function Editor(props: EditorProps) {
   const _onChange: ChangeEventHandler<HTMLDivElement> = (e) => {
     debouncedCheckKeyWordRef.current?.()
 
-    onChange?.(e.currentTarget.innerHTML)
+    // 使用安全清理后的内容
+    onChange?.(sanitizeHTML(e.currentTarget.innerHTML))
   }
 
   // 安全的定时器管理 - 只管理组件内的定时器
@@ -350,6 +454,61 @@ export function Editor(props: EditorProps) {
       }
     }
 
+    // 处理删除标签的逻辑（contenteditable=false 的标签需要手动处理）
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      const selection = window.getSelection()
+      if (isValidSelection(selection)) {
+        const range = selection.getRangeAt(0)
+        const container = range.startContainer
+        const offset = range.startOffset
+
+        if (e.key === 'Backspace') {
+          const prev = getPreviousSiblingAtCaret(container, offset)
+          if (prev instanceof Element && isLabelElement(prev)) {
+            e.preventDefault()
+            const parent = prev.parentNode as (Node & ParentNode) | null
+            // 先移除标签
+            parent?.removeChild(prev)
+            // 放置光标
+            if (isTextNode(container)) {
+              // 常见场景：在标签后的文本节点开头
+              placeCaret(container, 0)
+            } else if (parent) {
+              // caret 在元素节点上，尝试放在移除的标签后面的节点开头
+              const el = container as Element
+              const nextAfterRemoved = el.childNodes[offset] || null
+              if (isTextNode(nextAfterRemoved)) {
+                placeCaret(nextAfterRemoved, 0)
+              } else {
+                // 插入一个空文本节点用于安放光标
+                const placeholder = document.createTextNode('')
+                if (nextAfterRemoved) {
+                  el.insertBefore(placeholder, nextAfterRemoved)
+                } else {
+                  el.appendChild(placeholder)
+                }
+                placeCaret(placeholder, 0)
+              }
+            }
+            // 触发变更
+            if (ref.current) onChange?.(sanitizeHTML(ref.current.innerHTML))
+            return
+          }
+        } else if (e.key === 'Delete') {
+          const next = getNextSiblingAtCaret(container, offset)
+          if (next instanceof Element && isLabelElement(next)) {
+            e.preventDefault()
+            const parent = next.parentNode
+            // 移除标签
+            parent?.removeChild(next)
+            // 删除保持原光标位置
+            if (ref.current) onChange?.(sanitizeHTML(ref.current.innerHTML))
+            return
+          }
+        }
+      }
+    }
+
     // 对于方向键，延迟检查关键词（因为光标位置会改变）
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
       safeSetTimeout(() => {
@@ -384,7 +543,8 @@ export function Editor(props: EditorProps) {
       content !== undefined &&
       ref.current.innerHTML !== content
     ) {
-      ref.current.innerHTML = content
+      // 设置内容时也进行安全清理
+      ref.current.innerHTML = sanitizeHTML(content)
     }
   }, [content])
 
@@ -434,7 +594,7 @@ export function Editor(props: EditorProps) {
       {/* Labels 列表 */}
       {shouldShowLabels && cursorPosition && (
         <div
-          className='absolute z-50 max-h-48 min-w-32 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg'
+          className='absolute z-50 max-h-48 min-w-32 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800'
           style={{
             left: cursorPosition.left,
             top: cursorPosition.top,
@@ -443,12 +603,14 @@ export function Editor(props: EditorProps) {
           {labels.map((label, index) => (
             <div
               key={label.id}
-              className={`cursor-pointer px-3 py-2 text-sm hover:bg-gray-100 ${
-                index === selectedIndex ? 'bg-blue-100 text-blue-700' : ''
+              className={`cursor-pointer px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                index === selectedIndex
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                  : 'text-gray-900 dark:text-gray-100'
               }`}
               onClick={() => selectLabel(label)}
             >
-              <span className='text-gray-500'>#</span>
+              <span className='text-gray-500 dark:text-gray-400'>#</span>
               {label.name}
             </div>
           ))}

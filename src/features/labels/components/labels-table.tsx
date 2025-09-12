@@ -96,7 +96,7 @@ export function LabelsTable() {
   if (error) {
     return (
       <div className='text-center py-8'>
-        <p className='text-red-600'>Failed to load labels. Please try again.</p>
+        <p className='text-red-600 dark:text-red-400'>Failed to load labels. Please try again.</p>
       </div>
     )
   }

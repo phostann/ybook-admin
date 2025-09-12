@@ -1,4 +1,10 @@
-import { Editor } from '@/components/editor'
+import { useRef, useState } from 'react'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Image, Upload, Video, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,13 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Image, Upload, Video, X } from 'lucide-react'
-import { useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-import { z } from 'zod'
+import { Editor } from '@/components/editor'
 import { notesApi, NoteType, uploadApi, type NoteCreateRequest } from '../api'
 import { useNotesContext } from './notes-provider'
 
@@ -41,7 +41,8 @@ const noteFormSchema = z.object({
     .string()
     .min(1, 'Content is required')
     .max(50000, 'Content is too long'),
-  type: z.nativeEnum(NoteType),
+  type: z.enum([NoteType.IMAGE_TEXT, NoteType.VIDEO]),
+  labelIds: z.array(z.number()).optional(), // Optional array of label IDs
 })
 
 type NoteFormValues = z.infer<typeof noteFormSchema>
@@ -195,17 +196,10 @@ export function NotesCreateDialog() {
         images:
           data.type === NoteType.IMAGE_TEXT ? imageUrls.join(',') : posterUrl, // Use poster for video type
         video: data.type === NoteType.VIDEO ? videoUrl : undefined,
+        labelIds: data.labelIds,
       }
 
-      const result = await notesApi.create(noteData)
-
-      // TODO: 如果后端支持，这里可以添加标签关联的逻辑
-      // const labelIds = extractLabelIdsFromHTML(data.content)
-      // if (labelIds.length > 0) {
-      //   await notesApi.associateLabels(result.data.id, labelIds)
-      // }
-
-      return result
+      return await notesApi.create(noteData)
     },
     onSuccess: () => {
       toast.success('Note created successfully')
@@ -235,18 +229,31 @@ export function NotesCreateDialog() {
   })
 
   const onSubmit = (data: NoteFormValues) => {
-    console.log('Submitting note:', data)
-    // Validation based on note type
-    // if (data.type === NoteType.IMAGE_TEXT && imageFiles.length === 0) {
-    //   toast.error('Please upload at least one image for Image & Text note')
-    //   return
-    // }
-    // if (data.type === NoteType.VIDEO && !videoFile) {
-    //   toast.error('Please upload a video for Video note')
-    //   return
-    // }
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(data.content, 'text/html')
+    const topicDomList = doc.querySelectorAll('a')
+    const labelIds: number[] = []
 
-    // createMutation.mutate(data)
+    topicDomList.forEach((dom) => {
+      const labelIdStr = dom.getAttribute('data-label-id')
+      if (labelIdStr != null) {
+        const labelId = Number(labelIdStr)
+        if (!isNaN(labelId)) {
+          labelIds.push(labelId)
+        }
+      }
+    })
+
+    if (data.type === NoteType.IMAGE_TEXT && imageFiles.length === 0) {
+      toast.error('Please upload at least one image for Image & Text note')
+      return
+    }
+    if (data.type === NoteType.VIDEO && !videoFile) {
+      toast.error('Please upload a video for Video note')
+      return
+    }
+
+    createMutation.mutate({ ...data, labelIds })
   }
 
   const handleClose = () => {
@@ -338,14 +345,8 @@ export function NotesCreateDialog() {
                 <FormItem>
                   <FormLabel>Content</FormLabel>
                   <FormControl>
-                    {/* <TiptapEditor
-                      placeholder='Write your note content here... Use # to mention labels'
-                      content={field.value}
-                      onChange={field.onChange}
-                      extensions={[LabelsExtension]} // 传入 labels 插件
-                    /> */}
                     <Editor
-                      className='border-border bg-background focus:ring-ring min-h-40 w-full border border-solid p-2 text-sm shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none rounded-lg'
+                      className='border-border bg-background focus:ring-ring min-h-40 w-full rounded-lg border border-solid p-2 text-sm shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none'
                       showLabelSelector
                       content={field.value}
                       onChange={field.onChange}

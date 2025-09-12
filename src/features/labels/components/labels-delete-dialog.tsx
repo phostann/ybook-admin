@@ -54,7 +54,7 @@ export function LabelsDeleteDialog({
           <AlertDialogDescription>
             Are you sure you want to delete the label "{currentRow.name}"? 
             {currentRow.useCount > 0 && (
-              <span className='text-amber-600 font-medium'>
+              <span className='text-amber-600 dark:text-amber-400 font-medium'>
                 {' '}This label is currently used in {currentRow.useCount} items.
               </span>
             )}
@@ -68,7 +68,7 @@ export function LabelsDeleteDialog({
           <AlertDialogAction
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
-            className='bg-red-600 hover:bg-red-700 focus:ring-red-600'
+            className='bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 focus:ring-red-600'
           >
             {deleteMutation.isPending ? 'Deleting...' : 'Delete Label'}
           </AlertDialogAction>

@@ -2,8 +2,10 @@ import { AxiosError } from 'axios'
 import { toast } from 'sonner'
 
 export function handleServerError(error: unknown) {
-  // eslint-disable-next-line no-console
-  console.log(error)
+  // 在开发环境下记录错误信息用于调试
+  if (import.meta.env.DEV) {
+    console.log(error)
+  }
 
   let errMsg = 'Something went wrong!'
 

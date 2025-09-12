@@ -23,8 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import TiptapEditor from '@/components/ui/tiptap-editor'
-import { LabelsExtension } from '@/lib/tiptap-labels-extension'
+import { Editor } from '@/components/editor'
 import {
   Select,
   SelectContent,
@@ -39,7 +38,7 @@ import { useNotesContext } from './notes-provider'
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title is too long'),
   content: z.string().min(1, 'Content is required').max(50000, 'Content is too long'),
-  type: z.nativeEnum(NoteType, { required_error: 'Please select a note type' }),
+  type: z.enum(NoteType),
 })
 
 type NoteFormValues = z.infer<typeof noteFormSchema>
@@ -76,6 +75,7 @@ export function NotesEditDialog() {
     },
   })
 
+  // Form state management
   const watchedType = form.watch('type')
 
   // Load existing note data when dialog opens
@@ -244,15 +244,7 @@ export function NotesEditDialog() {
         video: data.type === NoteType.VIDEO ? videoUrl : undefined,
       }
 
-      const result = await notesApi.update(currentNote.id, noteData)
-
-      // TODO: 如果后端支持，这里可以添加标签关联的逻辑
-      // const labelIds = extractLabelIdsFromHTML(data.content)
-      // if (labelIds.length > 0) {
-      //   await notesApi.updateLabels(currentNote.id, labelIds)
-      // }
-
-      return result
+      return await notesApi.update(currentNote.id, noteData)
     },
     onSuccess: () => {
       toast.success('Note updated successfully')
@@ -392,11 +384,11 @@ export function NotesEditDialog() {
                 <FormItem>
                   <FormLabel>Content</FormLabel>
                   <FormControl>
-                    <TiptapEditor
-                      placeholder='Write your note content here... Use # to mention labels'
+                    <Editor
+                      className='border-border bg-background focus:ring-ring min-h-40 w-full border border-solid p-2 text-sm shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none rounded-lg'
+                      showLabelSelector
                       content={field.value}
                       onChange={field.onChange}
-                      extensions={[LabelsExtension]} // 传入 labels 插件
                     />
                   </FormControl>
                   <FormDescription>
