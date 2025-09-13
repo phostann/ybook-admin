@@ -32,7 +32,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Editor } from '@/components/editor'
-import { notesApi, NoteType, uploadApi, type NoteCreateRequest } from '../api'
+import {
+  notesApi,
+  NoteType,
+  uploadApi,
+  type NoteCreateRequest,
+  type ImageInfo,
+} from '../api'
 import { useNotesContext } from './notes-provider'
 
 const noteFormSchema = z.object({
@@ -43,6 +49,7 @@ const noteFormSchema = z.object({
     .max(50000, 'Content is too long'),
   type: z.enum([NoteType.IMAGE_TEXT, NoteType.VIDEO]),
   labelIds: z.array(z.number()).optional(), // Optional array of label IDs
+  ipLocation: z.string().optional(), // Optional IP location
 })
 
 type NoteFormValues = z.infer<typeof noteFormSchema>
@@ -50,6 +57,8 @@ type NoteFormValues = z.infer<typeof noteFormSchema>
 interface FilePreview {
   file: File
   url: string
+  width?: number
+  height?: number
 }
 
 export function NotesCreateDialog() {
@@ -75,6 +84,21 @@ export function NotesCreateDialog() {
   })
 
   const watchedType = form.watch('type')
+
+  // Helper function to get image dimensions
+  const getImageDimensions = (
+    file: File
+  ): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement('img')
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight })
+        URL.revokeObjectURL(img.src)
+      }
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
+  }
 
   // Create video poster from first frame
   const generateVideoPoster = async (videoFile: File): Promise<string> => {
@@ -105,17 +129,31 @@ export function NotesCreateDialog() {
     })
   }
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    files.forEach((file) => {
+
+    for (const file of files) {
       if (file.type.startsWith('image/')) {
-        const preview: FilePreview = {
-          file,
-          url: URL.createObjectURL(file),
+        try {
+          const dimensions = await getImageDimensions(file)
+          const preview: FilePreview = {
+            file,
+            url: URL.createObjectURL(file),
+            width: dimensions.width,
+            height: dimensions.height,
+          }
+          setImageFiles((prev) => [...prev, preview])
+        } catch (error) {
+          console.error('Failed to get image dimensions:', error)
+          // Fallback: add without dimensions
+          const preview: FilePreview = {
+            file,
+            url: URL.createObjectURL(file),
+          }
+          setImageFiles((prev) => [...prev, preview])
         }
-        setImageFiles((prev) => [...prev, preview])
       }
-    })
+    }
   }
 
   const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,15 +200,19 @@ export function NotesCreateDialog() {
       setIsLoading(true)
 
       // Upload files
-      let imageUrls: string[] = []
+      let images: ImageInfo[] = []
       let videoUrl = ''
-      let posterUrl = ''
+      let posterImageInfo: ImageInfo | null = null
 
       if (data.type === NoteType.IMAGE_TEXT && imageFiles.length > 0) {
         const imageResults = await uploadApi.uploadMultiple(
           imageFiles.map((f) => f.file)
         )
-        imageUrls = imageResults.map((result) => result.url)
+        images = imageResults.map((result, index) => ({
+          url: result.url,
+          width: imageFiles[index].width || 0,
+          height: imageFiles[index].height || 0,
+        }))
       }
 
       if (data.type === NoteType.VIDEO && videoFile) {
@@ -184,8 +226,25 @@ export function NotesCreateDialog() {
           const posterFile = new File([blob], 'poster.jpg', {
             type: 'image/jpeg',
           })
-          const posterResult = await uploadApi.upload(posterFile)
-          posterUrl = posterResult.data.url
+
+          // Get poster dimensions
+          try {
+            const posterDimensions = await getImageDimensions(posterFile)
+            const posterResult = await uploadApi.upload(posterFile)
+            posterImageInfo = {
+              url: posterResult.data.url,
+              width: posterDimensions.width,
+              height: posterDimensions.height,
+            }
+          } catch (error) {
+            console.error('Failed to get poster dimensions:', error)
+            const posterResult = await uploadApi.upload(posterFile)
+            posterImageInfo = {
+              url: posterResult.data.url,
+              width: 0,
+              height: 0,
+            }
+          }
         }
       }
 
@@ -194,9 +253,14 @@ export function NotesCreateDialog() {
         content: data.content,
         type: data.type,
         images:
-          data.type === NoteType.IMAGE_TEXT ? imageUrls.join(',') : posterUrl, // Use poster for video type
+          data.type === NoteType.IMAGE_TEXT
+            ? images
+            : posterImageInfo
+              ? [posterImageInfo]
+              : undefined,
         video: data.type === NoteType.VIDEO ? videoUrl : undefined,
         labelIds: data.labelIds,
+       ipLocation: data.ipLocation, 
       }
 
       return await notesApi.create(noteData)
@@ -253,7 +317,11 @@ export function NotesCreateDialog() {
       return
     }
 
-    createMutation.mutate({ ...data, labelIds })
+    createMutation.mutate({
+      ...data,
+      labelIds,
+      ipLocation: import.meta.env.DEV ? "Xi'an" : '',
+    })
   }
 
   const handleClose = () => {
@@ -282,7 +350,7 @@ export function NotesCreateDialog() {
 
   return (
     <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogClose}>
-      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+      <DialogContent className='max-h-[90vh] max-w-4xl overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Create Note</DialogTitle>
           <DialogDescription>
@@ -387,19 +455,31 @@ export function NotesCreateDialog() {
                 </div>
 
                 {imageFiles.length > 0 && (
-                  <div className='grid grid-cols-2 gap-3 md:grid-cols-3'>
+                  <div className='masonry-grid'>
                     {imageFiles.map((file, index) => (
-                      <div key={index} className='group relative aspect-[3/4]'>
-                        <img
-                          src={file.url}
-                          alt={`Preview ${index + 1}`}
-                          className='h-full w-full rounded-lg border object-cover shadow-sm transition-shadow group-hover:shadow-md'
-                        />
+                      <div 
+                        key={index} 
+                        className='relative mb-3'
+                      >
+                        <div className='relative overflow-hidden rounded-lg bg-muted'>
+                          <img
+                            src={file.url}
+                            alt={`Preview ${index + 1}`}
+                            className='w-full h-auto block'
+                            loading='lazy'
+                          />
+                          {/* Show image dimensions if available */}
+                          {file.width && file.height && (
+                            <div className='absolute bottom-1 left-1 rounded bg-black/70 px-1 py-0.5 text-xs text-white'>
+                              {file.width}×{file.height}
+                            </div>
+                          )}
+                        </div>
                         <Button
                           type='button'
                           variant='destructive'
                           size='icon'
-                          className='absolute -top-2 -right-2 h-6 w-6'
+                          className='absolute -top-2 -right-2 h-6 w-6 z-10'
                           onClick={() => removeImage(index)}
                         >
                           <X className='h-3 w-3' />

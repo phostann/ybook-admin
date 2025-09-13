@@ -1,13 +1,13 @@
 import type { ApiResult } from '@/lib/api-types'
 import { apiClient } from '@/lib/axios'
 
-// Auth 相关的请求和响应类型
-export interface LoginRequest {
+// Auth 相关的请求和响应类型 - 改为内部接口
+interface LoginRequest {
   username: string
   password: string
 }
 
-export interface UserCreateRequest {
+interface UserCreateRequest {
   username: string
   email: string
   password: string
@@ -16,16 +16,16 @@ export interface UserCreateRequest {
   phone?: string
 }
 
-export interface ChangePasswordRequest {
+interface ChangePasswordRequest {
   oldPassword: string
   newPassword: string
 }
 
-export interface LoginResponse {
+interface LoginResponse {
   token: string
 }
 
-export interface UserResponse {
+interface UserResponse {
   id: number
   username: string
   email: string

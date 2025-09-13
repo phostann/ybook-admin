@@ -8,20 +8,28 @@ export enum NoteType {
   VIDEO = '2', // 视频
 }
 
+// 图片信息类型，匹配API文档中的ImageInfo
+export interface ImageInfo {
+  url: string
+  width: number
+  height: number
+}
+
 // 笔记相关的请求和响应类型
 export interface NoteCreateRequest {
   title: string
   content: string
-  images?: string // 多个图片逗号分隔
+  images?: ImageInfo[] // 图片信息数组，包含URL和尺寸
   video?: string
   type: NoteType
   labelIds?: number[] // 可选的标签ID数组
+  ipLocation?: string // 可选的IP地址位置
 }
 
 export interface NoteUpdateRequest {
   title?: string
   content?: string
-  images?: string
+  images?: ImageInfo[] // 图片信息数组，包含URL和尺寸
   video?: string
   type?: NoteType
 }
@@ -31,7 +39,7 @@ export interface NoteResponse {
   uid: number
   title: string
   content: string
-  images?: string
+  images?: ImageInfo[] // 图片信息数组，包含URL和尺寸
   video?: string
   viewCount: number
   likeCount: number
@@ -39,41 +47,10 @@ export interface NoteResponse {
   collectCount: number
   isTop: string // '0'-否，'1'-是
   type: NoteType
+  ipLocation?: string
   labels: LabelResponse[]
   createTime: string
   updateTime: string
-}
-
-// 文件上传相关类型
-export interface FileUploadResponse {
-  url: string
-  originalFileName: string
-  size: number
-  contentType: string
-}
-
-// Additional component-specific types
-export interface NoteFormData {
-  title: string
-  content: string
-  images: File[]
-  video?: File
-  type: NoteType
-}
-
-export interface NoteDialogProps {
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  note?: NoteResponse | null
-  mode?: 'create' | 'edit'
-  onSuccess?: () => void
-}
-
-export interface NoteActionsProps {
-  note: NoteResponse
-  onEdit?: (note: NoteResponse) => void
-  onDelete?: (id: number) => void
-  onTogglePin?: (id: number) => void
 }
 
 // 笔记 API 服务

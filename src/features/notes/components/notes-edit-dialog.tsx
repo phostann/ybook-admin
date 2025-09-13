@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { notesApi, uploadApi, NoteType, type NoteUpdateRequest } from '../api'
+import { notesApi, uploadApi, NoteType, type NoteUpdateRequest, type ImageInfo } from '../api'
 import { useNotesContext } from './notes-provider'
 
 const noteFormSchema = z.object({
@@ -46,10 +46,14 @@ type NoteFormValues = z.infer<typeof noteFormSchema>
 interface FilePreview {
   file: File
   url: string
+  width?: number
+  height?: number
 }
 
 interface ExistingMedia {
   url: string
+  width?: number
+  height?: number
   isExisting: true
 }
 
@@ -78,6 +82,19 @@ export function NotesEditDialog() {
   // Form state management
   const watchedType = form.watch('type')
 
+  // Helper function to get image dimensions
+  const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement('img')
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight })
+        URL.revokeObjectURL(img.src)
+      }
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   // Load existing note data when dialog opens
   useEffect(() => {
     if (isEditDialogOpen && currentNote) {
@@ -89,16 +106,23 @@ export function NotesEditDialog() {
 
       // Load existing media
       if (currentNote.type === NoteType.IMAGE_TEXT && currentNote.images) {
-        const imageUrls = currentNote.images.split(',').filter(url => url.trim())
-        setImageFiles(imageUrls.map(url => ({ url: url.trim(), isExisting: true as const })))
+        setImageFiles(
+          currentNote.images.map(img => ({
+            url: img.url,
+            width: img.width,
+            height: img.height,
+            isExisting: true as const
+          }))
+        )
       }
 
       if (currentNote.type === NoteType.VIDEO) {
         if (currentNote.video) {
           setVideoFile({ url: currentNote.video, isExisting: true })
         }
-        if (currentNote.images) {
-          setVideoPoster(currentNote.images)
+        if (currentNote.images && currentNote.images.length > 0) {
+          const posterImage = currentNote.images[0]
+          setVideoPoster(posterImage.url)
         }
       }
     }
@@ -128,17 +152,31 @@ export function NotesEditDialog() {
     })
   }
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    files.forEach(file => {
+    
+    for (const file of files) {
       if (file.type.startsWith('image/')) {
-        const preview: FilePreview = {
-          file,
-          url: URL.createObjectURL(file)
+        try {
+          const dimensions = await getImageDimensions(file)
+          const preview: FilePreview = {
+            file,
+            url: URL.createObjectURL(file),
+            width: dimensions.width,
+            height: dimensions.height,
+          }
+          setImageFiles(prev => [...prev, preview])
+        } catch (error) {
+          console.error('Failed to get image dimensions:', error)
+          // Fallback: add without dimensions
+          const preview: FilePreview = {
+            file,
+            url: URL.createObjectURL(file),
+          }
+          setImageFiles(prev => [...prev, preview])
         }
-        setImageFiles(prev => [...prev, preview])
       }
-    })
+    }
   }
 
   const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,21 +228,29 @@ export function NotesEditDialog() {
       setIsLoading(true)
       
       // Upload new files
-      let imageUrls: string[] = []
+      let images: ImageInfo[] = []
       let videoUrl = ''
-      let posterUrl = ''
+      let posterImageInfo: ImageInfo | null = null
 
       if (data.type === NoteType.IMAGE_TEXT) {
         // Handle image files - keep existing ones and upload new ones
-        const urlPromises = imageFiles.map(async (item) => {
+        const imagePromises = imageFiles.map(async (item) => {
           if ('file' in item) {
             const result = await uploadApi.upload(item.file)
-            return result.data.url
+            return {
+              url: result.data.url,
+              width: item.width || 0,
+              height: item.height || 0,
+            }
           } else {
-            return item.url
+            return {
+              url: item.url,
+              width: item.width || 0,
+              height: item.height || 0,
+            }
           }
         })
-        imageUrls = await Promise.all(urlPromises)
+        images = await Promise.all(imagePromises)
       }
 
       if (data.type === NoteType.VIDEO) {
@@ -225,11 +271,40 @@ export function NotesEditDialog() {
             const response = await fetch(videoPoster)
             const blob = await response.blob()
             const posterFile = new File([blob], 'poster.jpg', { type: 'image/jpeg' })
-            const posterResult = await uploadApi.upload(posterFile)
-            posterUrl = posterResult.data.url
+            
+            try {
+              const posterDimensions = await getImageDimensions(posterFile)
+              const posterResult = await uploadApi.upload(posterFile)
+              posterImageInfo = {
+                url: posterResult.data.url,
+                width: posterDimensions.width,
+                height: posterDimensions.height,
+              }
+            } catch (error) {
+              console.error('Failed to get poster dimensions:', error)
+              const posterResult = await uploadApi.upload(posterFile)
+              posterImageInfo = {
+                url: posterResult.data.url,
+                width: 0,
+                height: 0,
+              }
+            }
           } else {
-            // Existing poster
-            posterUrl = videoPoster
+            // Existing poster - try to get from current note data
+            if (currentNote?.images && currentNote.images.length > 0) {
+              const existingPoster = currentNote.images[0]
+              posterImageInfo = {
+                url: existingPoster.url,
+                width: existingPoster.width,
+                height: existingPoster.height,
+              }
+            } else {
+              posterImageInfo = {
+                url: videoPoster,
+                width: 0,
+                height: 0,
+              }
+            }
           }
         }
       }
@@ -239,8 +314,8 @@ export function NotesEditDialog() {
         content: data.content,
         type: data.type,
         images: data.type === NoteType.IMAGE_TEXT 
-          ? imageUrls.join(',') 
-          : posterUrl,
+          ? images 
+          : posterImageInfo ? [posterImageInfo] : undefined,
         video: data.type === NoteType.VIDEO ? videoUrl : undefined,
       }
 
@@ -321,7 +396,7 @@ export function NotesEditDialog() {
 
   return (
     <Dialog open={isEditDialogOpen} onOpenChange={handleDialogClose}>
-      <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Edit Note</DialogTitle>
           <DialogDescription>
@@ -426,19 +501,31 @@ export function NotesEditDialog() {
                 </div>
                 
                 {imageFiles.length > 0 && (
-                  <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                  <div className='masonry-grid'>
                     {imageFiles.map((file, index) => (
-                      <div key={index} className='relative aspect-[3/4] group'>
-                        <img
-                          src={file.url}
-                          alt={`Preview ${index + 1}`}
-                          className='w-full h-full object-cover rounded-lg border shadow-sm group-hover:shadow-md transition-shadow'
-                        />
+                      <div 
+                        key={index} 
+                        className='relative mb-3'
+                      >
+                        <div className='relative overflow-hidden rounded-lg bg-muted'>
+                          <img
+                            src={file.url}
+                            alt={`Preview ${index + 1}`}
+                            className='w-full h-auto block'
+                            loading='lazy'
+                          />
+                          {/* Show image dimensions if available */}
+                          {file.width && file.height && (
+                            <div className='absolute bottom-1 left-1 rounded bg-black/70 px-1 py-0.5 text-xs text-white'>
+                              {file.width}×{file.height}
+                            </div>
+                          )}
+                        </div>
                         <Button
                           type='button'
                           variant='destructive'
                           size='icon'
-                          className='absolute -top-2 -right-2 h-6 w-6'
+                          className='absolute -top-2 -right-2 h-6 w-6 z-10'
                           onClick={() => removeImage(index)}
                         >
                           <X className='h-3 w-3' />

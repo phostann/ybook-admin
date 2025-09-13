@@ -89,7 +89,7 @@ export function formatDate(date: string | Date): string {
  * - trailing: invoke on the trailing edge of the timeout (default true)
  * - maxWait: enforce invoking after `maxWait` even if calls continue
  */
-export type Debounced<T extends (...args: never[]) => unknown> = ((
+type Debounced<T extends (...args: never[]) => unknown> = ((
   ...args: Parameters<T>
 ) => ReturnType<T> | undefined) & {
   cancel: () => void

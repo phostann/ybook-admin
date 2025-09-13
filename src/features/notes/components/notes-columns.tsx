@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { DataTableColumnHeader } from '@/components/data-table'
-import { NoteType, type NoteResponse } from '../api'
+import { NoteType, type NoteResponse, type ImageInfo } from '../api'
 import { NotesActions } from './notes-actions'
 
 export const notesColumns: ColumnDef<NoteResponse>[] = [
@@ -86,9 +86,7 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
     header: 'Media',
     cell: ({ row }) => {
       const note = row.original
-      const images = note.images
-        ? note.images.split(',').filter((url) => url.trim())
-        : []
+      const images = note.images || []
 
       if (note.type === NoteType.VIDEO && note.video) {
         return (
@@ -108,7 +106,7 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
                   src={note.video}
                   controls
                   className='max-h-[70vh] w-full rounded border'
-                  poster={images[0] || undefined}
+                  poster={images[0]?.url || undefined}
                 />
               </div>
             </DialogContent>
@@ -125,17 +123,25 @@ export const notesColumns: ColumnDef<NoteResponse>[] = [
                 View Images ({images.length})
               </Button>
             </DialogTrigger>
-            <DialogContent className='max-w-4xl'>
-              <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>{note.title}</h3>
-                <div className='grid max-h-[70vh] grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2'>
-                  {images.map((imageUrl, index) => (
-                    <img
-                      key={index}
-                      src={imageUrl.trim()}
-                      alt={`Image ${index + 1}`}
-                      className='h-auto w-full rounded border'
-                    />
+            <DialogContent className='max-w-6xl max-h-[90vh]'>
+              <DialogHeader>
+                <DialogTitle>{note.title}</DialogTitle>
+              </DialogHeader>
+              <div className='overflow-y-auto max-h-[calc(90vh-120px)]'>
+                <div className='masonry-grid'>
+                  {images.map((imageInfo: ImageInfo, index: number) => (
+                    <div key={index} className='relative mb-3'>
+                      <img
+                        src={imageInfo.url}
+                        alt={`Image ${index + 1}`}
+                        className='w-full h-auto rounded border'
+                      />
+                      {imageInfo.width && imageInfo.height && (
+                        <div className='absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white'>
+                          {imageInfo.width}×{imageInfo.height}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
